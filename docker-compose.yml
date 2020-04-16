@@ -1,0 +1,56 @@
+version: '3.5'
+
+services:
+      wirecloud:
+        image: fiware/wirecloud:${WIRECLOUD_VERSION}
+        container_name: wirecloud
+        hostname: wirecloud
+        ports:
+            - "${WIRECLOUD_PORT}:${WIRECLOUD_PORT}" # localhost:8000
+        networks:
+          default:
+            ipv4_address: 172.18.1.10
+
+        restart: always
+        depends_on:
+            - mysql-db
+        environment:
+            - DEBUG=True
+            - DEFAULT_THEME=wirecloud.defaulttheme
+            - DB_HOST=mysql-db
+            - DB_NAME=mysql
+            - DB_USERNAME="${MYSQL_DB_USER}"
+            - DB_PORT=${MYSQL_DB_PORT}
+            - DB_PASSWORD="${MYSQL_DB_PASSWORD}"   # Change this password!
+            - FORWARDED_ALLOW_IPS=*
+        volumes:
+            - wirecloud-data:/opt/wirecloud_instance/data
+            - wirecloud-static:/var/www/static
+      mysql-db:
+        restart: always
+        image: mysql:${MYSQL_DB_VERSION}
+        hostname: mysql-db
+        container_name: db-mysql
+        expose:
+          - "${MYSQL_DB_PORT}"
+        ports:
+          - "${MYSQL_DB_PORT}:${MYSQL_DB_PORT}" # localhost:3306
+        networks:
+          default:
+            ipv4_address: 172.18.1.6
+        environment:
+          - MYSQL_USER=${MYSQL_DB_USER}
+          - MYSQL_PASSWORD=${MYSQL_DB_PASSWORD}
+          - MYSQL_ROOT_PASSWORD=${MYSQL_DB_PASSWORD}
+        volumes:
+          - mysql-db:/var/lib/mysql
+networks:
+  default:
+    ipam:
+      config:
+        - subnet: 172.18.1.0/24
+
+volumes:
+  mysql-db: ~
+  wirecloud-static: ~
+  wirecloud-data: ~
